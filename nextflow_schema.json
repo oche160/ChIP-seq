@@ -1,0 +1,259 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/ChIP-seq/master/nextflow_schema.json",
+    "title": "ChIP-seq pipeline parameters",
+    "description": "Nextflow pipeline for ChIP-seq data analysis",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                }
+            }
+        },
+        "reference_genome_options": {
+            "title": "Reference genome options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Reference genome related files and options required for the workflow.",
+            "properties": {
+                "genome": {
+                    "type": "string",
+                    "description": "Name of iGenomes reference.",
+                    "default": "GRCh38",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
+                },
+                "fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to FASTA genome file.",
+                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have the appropriate alignment index available this will be generated for you automatically. Combine with `--save_reference` to save alignment index for future runs.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.gtf(\\.gz)?$",
+                    "description": "Path to GTF annotation file.",
+                    "fa_icon": "fas fa-code-branch",
+                    "help_text": "This parameter is *mandatory* if `--genome` is not specified."
+                },
+                "bwa_index": {
+                    "type": "string",
+                    "description": "Path to directory or tar.gz archive for pre-built BWA index.",
+                    "fa_icon": "fas fa-bezier-curve"
+                },
+                "bowtie2_index": {
+                    "type": "string",
+                    "format": "path",
+                    "fa_icon": "fas fa-bezier-curve",
+                    "description": "Path to directory or tar.gz archive for pre-built Bowtie2 index."
+                },
+                "blacklist": {
+                    "type": "string",
+                    "description": "Path to blacklist regions in BED format, used for filtering alignments.",
+                    "help_text": "If provided, alignments that overlap with the regions in this file will be filtered out (see [ENCODE blacklists](https://sites.google.com/site/anshulkundaje/projects/blacklists)). The file should be in BED format. Blacklisted regions for *GRCh37*, *GRCh38*, *GRCm38*, *hg19*, *hg38*, *mm10* are bundled with the pipeline in the [`blacklists`](../assets/blacklists/) directory, and as such will be automatically used if any of those genomes are specified with the `--genome` parameter.",
+                    "fa_icon": "fas fa-book-dead"
+                }
+            }
+        },
+        "adapter_trimming_options": {
+            "title": "Adapter trimming options",
+            "type": "object",
+            "fa_icon": "fas fa-cut",
+            "description": "Options to adjust adapter trimming criteria.",
+            "properties": {
+                "trimming": {
+                    "type": "boolean",
+                    "description": "Enable adapter trimming.",
+                    "fa_icon": "fas fa-cut"
+                },
+                "trimmingOpts": {
+                    "type": "string",
+                    "description": "Options to pass to the adapter trimming tool.",
+                    "default": "--trim-n --length 20",
+                    "fa_icon": "fas fa-cut"
+                }
+            }
+        },
+        "alignment_options": {
+            "title": "Alignment options",
+            "type": "object",
+            "fa_icon": "fas fa-map-signs",
+            "description": "Options to adjust parameters and filtering criteria for read alignments.",
+            "properties": {
+                "aligner": {
+                    "type": "string",
+                    "default": "bwa",
+                    "description": "Specifies the alignment algorithm to use - available options are 'bwa', 'bowtie2' and 'star'.",
+                    "fa_icon": "fas fa-map-signs",
+                    "enum": ["bwa", "bowtie2", "chromap", "star"]
+                },
+                "bwaOpts": {
+                    "type": "string",
+                    "description": "Options to pass to BWA.",
+                    "default": "-M",
+                    "fa_icon": "fas fa-cog"
+                },
+                "bowtie2Opts": {
+                    "type": "string",
+                    "description": "Options to pass to Bowtie2.",
+                    "default": "--very-sensitive --end-to-end --reorder",
+                    "fa_icon": "fas fa-cog"
+                },
+                "keepDups": {
+                    "type": "boolean",
+                    "description": "Duplicate reads are not filtered from alignments.",
+                    "default": false,
+                    "fa_icon": "fas fa-cart-arrow-down"
+                },
+                "mapq": {
+                    "type": "integer",
+                    "description": "Minimum mapping quality for alignments.",
+                    "default": 10,
+                    "fa_icon": "fas fa-hand-paper"
+                }
+            }
+        },
+        "peak_calling_options": {
+            "title": "Peak calling options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-area",
+            "description": "Options to adjust peak calling criteria.",
+            "properties": {
+                "macs2Opts": {
+                    "type": "string",
+                    "description": "Options to pass to MACS2.",
+                    "default": "--SPMR --trackline --bdg --keep-dup all",
+                    "fa_icon": "fas fa-cog"
+                },
+                "broadCutoff": {
+                    "type": "number",
+                    "description": "Specifies broad cutoff value for MACS2. Only used when --narrow_peak isn’t specified.",
+                    "default": 0.1,
+                    "fa_icon": "fas fa-hand-scissors"
+                }
+            }
+        },
+        "process_skipping_options": {
+            "title": "Process skipping options",
+            "type": "object",
+            "fa_icon": "fas fa-fast-forward",
+            "description": "Options to skip various steps within the workflow.",
+            "properties": {
+                "skipFastqc": {
+                    "type": "boolean",
+                    "description": "Skip FastQC.",
+                    "default": false,
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "skipMultiqc": {
+                    "type": "boolean",
+                    "description": "Skip MultiQC.",
+                    "default": false,
+                    "fa_icon": "fas fa-fast-forward"
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "properties": {
+                "maxMemory": {
+                    "type": "string",
+                    "description": "Maximum amount of memory that can be requested for any single job.",
+                    "default": "128 GB",
+                    "fa_icon": "fas fa-memory"
+                },
+                "maxCpus": {
+                    "type": "integer",
+                    "description": "Maximum number of CPUs that can be requested for any single job.",
+                    "default": 16,
+                    "fa_icon": "fas fa-microchip"
+                },
+                "maxTime": {
+                    "type": "string",
+                    "description": "Maximum amount of time that can be requested for any single job.",
+                    "default": "240h",
+                    "fa_icon": "far fa-clock"
+                },
+                "tmpDir": {
+                    "type": "string",
+                    "description": "Temporary directory for processing.",
+                    "default": "./work",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "enable_conda": {
+                    "type": "boolean",
+                    "description": "Run this workflow with Conda.",
+                    "default": false,
+                    "fa_icon": "fas fa-bacon"
+                },
+                "condaCacheDir": {
+                    "type": "string",
+                    "description": "Directory to store Conda environments.",
+                    "default": "/path/to/conda/cache",
+                    "fa_icon": "fas fa-database"
+                },
+                "singularityImagePath": {
+                    "type": "string",
+                    "description": "Path to Singularity image.",
+                    "default": "/path/to/singularity/images",
+                    "fa_icon": "fas fa-box"
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/reference_genome_options"
+        },
+        {
+            "$ref": "#/definitions/adapter_trimming_options"
+        },
+        {
+            "$ref": "#/definitions/alignment_options"
+        },
+        {
+            "$ref": "#/definitions/peak_calling_options"
+        },
+        {
+            "$ref": "#/definitions/process_skipping_options"
+        },
+        {
+            "$ref": "#/definitions/generic_options"
+        }
+    ]
+}
